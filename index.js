@@ -54,9 +54,22 @@ async function run() {
       const data = req.body 
       
       const query = {_id: new ObjectId(id)}
-      const updatedData = {
-        $set:{
-          role: data.role
+
+      console.log(data)
+      let updatedData
+
+      if(data?.instructor ==="yes" || data?.instructor ==="no"){
+         updatedData = {
+          $set:{
+            instructor: data.instructor
+          }
+        }
+      }
+      else{
+        updatedData = {
+          $set:{
+            role: data.role
+          }
         }
       }
       const result = await userCollections.updateOne(query,updatedData)
@@ -79,19 +92,31 @@ async function run() {
       const result = await cursor.toArray()
       res.send(result)
     })
-    app.patch('/class/:id', async(req,res)=>{
-      const id = req.params.id 
-      const data = req.body  
-      console.log(data.data)
-      const query = {_id: new ObjectId(id)}
-      const updateData = {
-        $set:{
-          status: data.data
-        }
-      }
-      const result = await classCollections.updateOne(query,updateData)
-      res.send(result)
-    })
+  app.patch('/class/:id', async (req, res) => {
+  const id = req.params.id;
+  const data = req.body;
+  
+  const query = { _id: new ObjectId(id) };
+  let updateData;
+
+  if (data.data.length > 8) { // Check the length of data.data instead of data.length
+    updateData = {
+      $set: {
+        feedback: data.data,
+      },
+    };
+  } else {
+    updateData = {
+      $set: {
+        status: data.data,
+      },
+    };
+  }
+
+  const result = await classCollections.updateOne(query, updateData);
+  res.send(result);
+});
+
     app.get('/class/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
