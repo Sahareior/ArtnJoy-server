@@ -1,4 +1,5 @@
 const express = require('express')
+const stripe = require('stripe')('sk_test_51NEo1rESJveeRr2D7C6p7latFyClahoQ1dj9pw2qLzm7D088AbwYkUkY4l3LIT9NPStLZseQMGOlUCqWxXJvRGwf00BQatOtqb');
 const cors = require('cors')
 const app = express()
 app.use(cors())
@@ -48,6 +49,13 @@ async function run() {
         res.send(result)
     
     })
+
+    app.get('/users/email/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email};
+      const result = await userCollections.find(query).toArray();
+      res.send(result);
+    });
     // making admin 
     app.patch('/users/:id', async(req,res)=>{
       const id = req.params.id
@@ -55,7 +63,7 @@ async function run() {
       
       const query = {_id: new ObjectId(id)}
 
-      console.log(data)
+ 
       let updatedData
 
       if(data?.instructor ==="yes" || data?.instructor ==="no"){
@@ -123,8 +131,26 @@ async function run() {
       const results = await classCollections.find(query).toArray();
       res.send(results);
     });
-    
+    app.put('/class/:id', async(req,res)=>{
+      const id = req.params.id
+      const query = {_id: new ObjectId(id)}
+      const options = {upsert:true}
+      const updatedData = req.body;
+      const { name,image,cost, seats} = updatedData
+      console.log(updatedData)
+      const data = {
+        $set: {
+          className: name,
+           classImage : image,
+            price:cost ,
+             availableSeats:seats
+        }
+      }
+      const result = await classCollections.updateOne(query,data,options)
+      res.send(result)
+  })
     // ..........cart
+    
     app.post('/cart', async(req,res)=>{
         const cart = req.body 
         const result = await cartCollections.insertOne(cart)
@@ -136,6 +162,52 @@ async function run() {
         const result = await cursor.toArray()
         res.send(result)
     })
+
+    app.get('/cart/:email', async(req,res)=>{
+      const email = req.params.email 
+      
+      const query = {userEmail:email}
+      const result = await cartCollections.find(query).toArray() 
+      
+      res.send(result)
+    })
+
+   
+app.get('/cart/id/:id', async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await cartCollections.find(query).toArray();
+  res.send(result);
+});
+    app.delete('/cart/id/:id', async(req,res)=>{
+      const id = req.params.id 
+      const query = {_id: new ObjectId(id)}
+      const result = await cartCollections.deleteOne(query)
+      res.send(result)
+    })
+
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const {totalPrice} = req.body;
+      console.log(totalPrice)
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: totalPrice*100,
+        
+        currency: "usd",
+        payment_method_types: [
+        "card"
+      ],
+      });
+    
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+     
+    });
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
