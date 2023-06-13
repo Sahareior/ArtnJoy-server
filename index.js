@@ -190,11 +190,11 @@ app.get('/cart/id/:id', async (req, res) => {
 
     app.post("/create-payment-intent", async (req, res) => {
       const {totalPrice} = req.body;
-      // const price = parseFloat(totalPrice)
-      const price = parseFloat(totalPrice)
+   
+
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: price*100,
+        amount: totalPrice*100,
         
         currency: "usd",
         payment_method_types: [
@@ -207,11 +207,21 @@ app.get('/cart/id/:id', async (req, res) => {
       });
      
     });
-    app.post('payment', async(req,res)=>{
+    app.post('/payment', async(req,res)=>{
       const data = req.body 
+      
       const result = await paymentCollections.insertOne(data)
+      res.send(result)
     })
-
+    app.get('/payment/:email', async (req, res) => {
+      const userEmail = req.params.email; // Retrieve the email parameter from the request
+      
+      const cursor = paymentCollections.find({ email: userEmail }).sort({ date: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    
+    
 
 
     // Send a ping to confirm a successful connection
