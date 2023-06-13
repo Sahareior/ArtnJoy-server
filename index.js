@@ -29,6 +29,7 @@ async function run() {
     const instructorCollections = client.db('carftANDartDB').collection('instructor')
     const cartCollections = client.db('carftANDartDB').collection('carts')
     const classCollections = client.db('carftANDartDB').collection('AddedClasses')
+    const paymentCollections = client.db('carftANDartDB').collection('payments')
 
     app.post('/users', async (req, res) => {
         const newUser = req.body;
@@ -137,7 +138,7 @@ async function run() {
       const options = {upsert:true}
       const updatedData = req.body;
       const { name,image,cost, seats} = updatedData
-      console.log(updatedData)
+     
       const data = {
         $set: {
           className: name,
@@ -189,10 +190,11 @@ app.get('/cart/id/:id', async (req, res) => {
 
     app.post("/create-payment-intent", async (req, res) => {
       const {totalPrice} = req.body;
-      console.log(totalPrice)
+      // const price = parseFloat(totalPrice)
+      const price = parseFloat(totalPrice)
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: totalPrice*100,
+        amount: price*100,
         
         currency: "usd",
         payment_method_types: [
@@ -205,6 +207,10 @@ app.get('/cart/id/:id', async (req, res) => {
       });
      
     });
+    app.post('payment', async(req,res)=>{
+      const data = req.body 
+      const result = await paymentCollections.insertOne(data)
+    })
 
 
 
