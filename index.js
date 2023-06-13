@@ -30,6 +30,7 @@ async function run() {
     const cartCollections = client.db('carftANDartDB').collection('carts')
     const classCollections = client.db('carftANDartDB').collection('AddedClasses')
     const paymentCollections = client.db('carftANDartDB').collection('payments')
+    const studentCollections = client.db ('carftANDartDB').collection('students')
 
     app.post('/users', async (req, res) => {
         const newUser = req.body;
@@ -221,6 +222,57 @@ app.get('/cart/id/:id', async (req, res) => {
       res.send(result);
     });
     
+
+    app.post('/students', async (req, res) => {
+      try {
+        const data = req.body;
+    
+        // Check if the instructor already exists
+        const existingData = await studentCollections.findOne({ instructor: data.instructor });
+        if (existingData) {
+          return res.status(409).json({ message: 'Instructor already exists' });
+        }
+    
+        // Insert the new student data
+        const result = await studentCollections.insertOne(data);
+        res.send(result);
+      } catch (error) {
+        // Handle any error that occurs during the database operation
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    });
+    
+    app.get('/students', async(req,res)=>{
+      const cursor = studentCollections.find()
+      const result = await cursor.toArray()
+      res.send(result)
+  })
+  app.patch('/students/:className', async (req, res) => {
+    const className = req.params.className;
+    const query = { className: className };
+  
+    try {
+      const existingData = await studentCollections.findOne(query);
+      if (!existingData) {
+        // Handle the case when the data is not found
+        return res.status(404).json({ message: 'Data not found' });
+      }
+  
+      const currentStudentCount = existingData.student;
+      const updatedData = {
+        $set: {
+          student: currentStudentCount + 1,
+        },
+      };
+  
+      const result = await studentCollections.updateOne(query, updatedData);
+      res.json(result);
+    } catch (error) {
+      // Handle any error that occurs during the database operation
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+  
     
 
 
