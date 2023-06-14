@@ -223,7 +223,6 @@ app.get('/cart/id/:id', async (req, res) => {
     app.post("/create-payment-intent", async (req, res) => {
       const {totalPrice} = req.body;
    
-
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         amount: totalPrice*100,
@@ -248,10 +247,13 @@ app.get('/cart/id/:id', async (req, res) => {
     app.get('/payment/:email', async (req, res) => {
       const userEmail = req.params.email; // Retrieve the email parameter from the request
       
-      const cursor = paymentCollections.find({ email: userEmail }).sort({ date: -1 });
+      const cursor = paymentCollections
+        .find({ email: userEmail })
+        .sort({ date: 1 }); // Sort by the "date" field in descending order
       const result = await cursor.toArray();
       res.send(result);
     });
+    
     
 
     app.post('/students', async (req, res) => {
