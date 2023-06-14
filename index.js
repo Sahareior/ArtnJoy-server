@@ -1,12 +1,32 @@
 const express = require('express')
 const stripe = require('stripe')('sk_test_51NEo1rESJveeRr2D7C6p7latFyClahoQ1dj9pw2qLzm7D088AbwYkUkY4l3LIT9NPStLZseQMGOlUCqWxXJvRGwf00BQatOtqb');
 const cors = require('cors')
+const jwt = require('jsonwebtoken');
 const app = express()
 app.use(cors())
 app.use(express.json());
+const secret = '61bcd85b905e1553f039bfb036f5a4793bcab874f1752b481bdb9c9f52f134f8'
 
 const port = process.env.PORT|| 5000
 
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  // console.log(authorization)
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: 'unauthorized access' });
+  }
+  // bearer token
+  const token = authorization.split(' ')[1];
+  // console.log(token)
+
+  jwt.verify(token, secret, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ error: true, message: 'unauthorized access' })
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
 // art&craft KrLszqKj2aBRnNeL
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -32,7 +52,17 @@ async function run() {
     const paymentCollections = client.db('carftANDartDB').collection('payments')
     const studentCollections = client.db ('carftANDartDB').collection('students')
 
-    app.post('/users', async (req, res) => {
+
+
+    
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, secret, { expiresIn: '1h' })
+
+      res.send({ token })
+    })
+
+    app.post('/users',  async (req, res) => {
         const newUser = req.body;
         const query = { email: newUser.email };
       
@@ -45,14 +75,14 @@ async function run() {
         }
       });      
 
-    app.get('/users', async(req,res)=>{
+    app.get('/users',verifyJWT, async(req,res)=>{
         const cursor =  userCollections.find()
         const result =await cursor.toArray()
         res.send(result)
     
     })
 
-    app.get('/users/email/:email', async (req, res) => {
+    app.get('/users/email/:email',verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email: email};
       const result = await userCollections.find(query).toArray();
