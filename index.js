@@ -188,13 +188,13 @@ async function run() {
       const results = await classCollections.find(query).toArray();
       res.send(results);
     });
+
     app.put("/class/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const options = { upsert: true };
       const updatedData = req.body;
       const { name, image, cost, seats } = updatedData;
-
+    
       const data = {
         $set: {
           className: name,
@@ -203,9 +203,12 @@ async function run() {
           availableSeats: seats,
         },
       };
-      const result = await classCollections.updateOne(query, data, options);
+    
+      const result = await classCollections.updateOne(query, data);
       res.send(result);
     });
+    
+    
     // ..........cart
 
     app.post("/cart", async (req, res) => {
