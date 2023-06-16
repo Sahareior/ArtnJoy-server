@@ -265,10 +265,14 @@ app.get('/cart/id/:id', async (req, res) => {
       
       const cursor = paymentCollections
         .find({ email: userEmail })
-        .sort({ date: 1 }); // Sort by the "date" field in descending order
+        .sort({ date: -1 }); // Sort by the "date" field in descending order
+      
       const result = await cursor.toArray();
-      res.send(result);
+      const sortedResult = result.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      res.send(sortedResult);
     });
+    
     
     
 
