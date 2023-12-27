@@ -194,7 +194,7 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const updatedData = req.body;
       const { name, image, cost, seats } = updatedData;
-    
+
       const data = {
         $set: {
           className: name,
@@ -203,12 +203,11 @@ async function run() {
           availableSeats: seats,
         },
       };
-    
+
       const result = await classCollections.updateOne(query, data);
       res.send(result);
     });
-    
-    
+
     // ..........cart
 
     app.post("/cart", async (req, res) => {
